@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyaz Yaka Performans Değerlendirme Sistemi v10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+        /* Özel Scrollbar Tasarımı */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <nav class="bg-blue-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-chart-line text-2xl"></i>
+                    <span class="font-bold text-xl tracking-wider">PERFORMANS DEĞERLENDİRME</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
+        <div class="border-b border-gray-200 overflow-x-auto">
+            <nav class="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
+                <button onclick="switchTab('degerlendirme')" id="btn-degerlendirme" class="tab-btn active whitespace-nowrap py-4 px-1 font-medium text-sm transition-colors">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i>Değerlendirme Girişi
+                </button>
+                <button onclick="switchTab('ozet')" id="btn-ozet" class="tab-btn whitespace-nowrap py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fa-solid fa-table mr-2"></i>Bölüm Bazlı Performans
+                </button>
+                <button onclick="switchTab('skor-karti')" id="btn-skor-karti" class="tab-btn whitespace-nowrap py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fa-solid fa-id-card mr-2"></i>Bireysel Skor Kartı
+                </button>
+                <button onclick="switchTab('tum-veriler')" id="btn-tum-veriler" class="tab-btn whitespace-nowrap py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fa-solid fa-database mr-2"></i>Tüm Veriler
+                </button>
+            </nav>
+        </div>
+
+        <div id="degerlendirme" class="tab-content active mt-6">
+            <div class="bg-white p-6 rounded-lg shadow mb-6">
+                <h2 class="text-xl font-bold text-blue-900 mb-6 border-b pb-4"><i class="fa-solid fa-user-plus mr-2"></i>Yeni Değerlendirme Girişi</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Çalışan Adı Soyadı *</label>
+                        <input type="text" id="emp-name" oninput="checkFormValidity()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" placeholder="Örn: Ahmet Yılmaz">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Proje Adı *</label>
+                        <input type="text" id="emp-project" oninput="checkFormValidity()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" placeholder="Örn: Merkez Ofis">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Hizmet *</label>
+                        <input type="text" id="emp-service" oninput="checkFormValidity()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" placeholder="Örn: Temizlik">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Pozisyon *</label>
+                        <input type="text" id="emp-position" oninput="checkFormValidity()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" placeholder="Örn: Operasyon Yöneticisi">
+                    </div>
+                </div>
+                
+                <div id="evaluation-form" class="space-y-8 mb-8">
+                    </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Operasyon Performans Yorumu</label>
+                    <textarea id="emp-comment" rows="3" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" placeholder="Çalışan hakkında operasyonel performans yorumunuzu ekleyebilirsiniz..."></textarea>
+                </div>
+
+                <div class="flex justify-end border-t pt-6">
+                    <button id="btn-add-employee" onclick="addEmployee()" disabled class="bg-gray-400 text-white font-bold py-3 px-8 rounded-lg shadow-md cursor-not-allowed transition-all duration-300 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Sistemi Kaydet ve Ekle
+                    </button>
+                </div>
+                <p id="form-warning" class="text-right text-xs text-red-500 mt-2">Kayıt yapabilmek için lütfen tüm bilgileri doldurun ve tüm kriterlere puan verin.</p>
+            </div>
+        </div>
+
+        <div id="ozet" class="tab-content mt-6">
+            <div class="bg-white p-6 rounded-lg shadow overflow-x-auto border-t-4 border-blue-600">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-blue-900">Bölüm Bazlı Performans Özeti</h2>
+                        <p class="text-sm text-gray-500">Seçilen filtrelere göre çalışan karşılaştırması. <span class="text-blue-600 font-semibold">(Düzenlemek için isme tıklayın)</span></p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <label class="font-bold text-gray-700 text-sm"><i class="fa-solid fa-filter text-blue-600 mr-1"></i> Proje:</label>
+                            <select id="project-filter" onchange="renderSummaryTable()" class="border border-gray-300 rounded p-1.5 text-sm font-semibold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px]">
+                                <option value="all">Tümü</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2 border-l pl-3 border-gray-300">
+                            <label class="font-bold text-gray-700 text-sm"><i class="fa-solid fa-broom text-blue-600 mr-1"></i> Hizmet:</label>
+                            <select id="service-filter" onchange="renderSummaryTable()" class="border border-gray-300 rounded p-1.5 text-sm font-semibold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px]">
+                                <option value="all">Tümü</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                    <thead class="bg-gray-100">
+                        <tr id="summary-header">
+                            </tr>
+                    </thead>
+                    <tbody id="summary-tbody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                    <tfoot class="bg-blue-50 font-bold" id="summary-tfoot">
+                        </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div id="skor-karti" class="tab-content mt-6">
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-4 bg-white p-4 rounded-lg shadow border border-gray-200 gap-4">
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="font-bold text-gray-700 text-sm whitespace-nowrap"><i class="fa-solid fa-filter text-blue-600 mr-1"></i> Proje:</label>
+                        <select id="scorecard-project-filter" onchange="updateScorecardEmployeeDropdown()" class="w-full sm:w-48 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 p-2 bg-blue-50 font-bold text-blue-900 outline-none">
+                            <option value="all">Tümü</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="font-bold text-gray-700 text-sm whitespace-nowrap"><i class="fa-solid fa-user-check text-blue-600 mr-1"></i> Çalışan:</label>
+                        <select id="scorecard-select" onchange="renderScorecard()" class="w-full sm:w-64 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 p-2 bg-blue-50 font-bold text-blue-900 outline-none">
+                            </select>
+                    </div>
+                </div>
+                <button onclick="exportToPDF()" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition-colors flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-pdf"></i> PDF İndir
+                </button>
+            </div>
+
+            <div id="printable-scorecard" class="bg-white p-8 rounded-lg shadow max-w-5xl mx-auto border-t-8 border-blue-900">
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">BİREYSEL SKOR KARTI</h2>
+                    <p class="text-gray-500 mt-1">100 Üzerinden Otomatik Hesaplama</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-md">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="mb-1"><span class="font-semibold text-gray-600">Çalışan Adı:</span> <span id="sc-name" class="text-blue-900 font-bold ml-1">-</span></div>
+                        <div class="mb-1"><span class="font-semibold text-gray-600">Proje Adı:</span> <span id="sc-project" class="text-blue-900 font-bold ml-1">-</span></div>
+                        <div class="mb-1"><span class="font-semibold text-gray-600">Hizmet:</span> <span id="sc-service" class="text-blue-900 font-bold ml-1">-</span></div>
+                        <div class="mb-1"><span class="font-semibold text-gray-600">Pozisyon:</span> <span id="sc-position" class="text-blue-900 font-bold ml-1">-</span></div>
+                    </div>
+                    <div class="flex items-center justify-start md:justify-end border-t pt-3 md:border-t-0 md:pt-0">
+                        <div class="text-left md:text-right">
+                            <span class="font-semibold text-gray-600 block mb-1">Genel Performans Skoru:</span> 
+                            <span id="sc-total" class="text-4xl font-bold text-gray-800">0.00</span> 
+                            <span class="text-gray-500 text-lg">/ 100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="min-w-full divide-y divide-gray-200 text-sm mb-6 border">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-700">BÖLÜM / PARAMETRE</th>
+                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Puan (1-5)</th>
+                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Ağırlık (%)</th>
+                            <th class="px-4 py-3 text-center font-semibold text-blue-900">Skor (100)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scorecard-tbody" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+                <div class="bg-blue-50 p-4 rounded-md border border-blue-100">
+                    <h4 class="font-bold text-blue-900 mb-2">Operasyon Performans Yorumu</h4>
+                    <p id="sc-comment" class="text-gray-700 italic">Yorum girilmedi.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tum-veriler" class="tab-content mt-6">
+            <div class="bg-white p-6 rounded-lg shadow border-t-4 border-green-600">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-green-700"><i class="fa-solid fa-database mr-2"></i>Tüm Sistem Verileri</h2>
+                        <p class="text-sm text-gray-500">Sistemdeki tüm kayıtların ham listesi ve Excel çıktısı.</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded border border-gray-200">
+                            <label class="font-bold text-gray-700 text-xs ml-1">Proje:</label>
+                            <select id="all-data-project-filter" onchange="renderAllDataTable()" class="border border-gray-300 rounded p-1 text-xs font-semibold text-blue-900 outline-none w-28">
+                                <option value="all">Tümü</option>
+                            </select>
+                            <label class="font-bold text-gray-700 text-xs ml-1 border-l pl-2">Hizmet:</label>
+                            <select id="all-data-service-filter" onchange="renderAllDataTable()" class="border border-gray-300 rounded p-1 text-xs font-semibold text-blue-900 outline-none w-28">
+                                <option value="all">Tümü</option>
+                            </select>
+                        </div>
+
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 text-sm w-full md:w-auto">
+                            <i class="fa-solid fa-file-excel"></i> Excel'e Aktar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto border border-gray-200 rounded-lg custom-scrollbar">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs text-left whitespace-nowrap">
+                        <thead class="bg-gray-100" id="all-data-header">
+                            </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="all-data-tbody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-gray-900 bg-opacity-75 flex items-center justify-center p-2 sm:p-4 transition-opacity">
+        <div class="bg-white w-full max-w-5xl h-full sm:max-h-[95vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-bold text-blue-900"><i class="fa-solid fa-user-pen mr-2"></i>Çalışan Verilerini Düzenle</h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-white">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Çalışan Adı Soyadı</label>
+                        <input type="text" id="edit-emp-name" class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Proje Adı</label>
+                        <input type="text" id="edit-emp-project" class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Hizmet</label>
+                        <input type="text" id="edit-emp-service" class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Pozisyon</label>
+                        <input type="text" id="edit-emp-position" class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                    </div>
+                </div>
+                <div id="edit-evaluation-form" class="space-y-6 mb-6"></div>
+                <div class="mb-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Operasyon Performans Yorumu</label>
+                    <textarea id="edit-emp-comment" rows="3" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <button onclick="deleteEmployee()" class="w-full sm:w-auto px-4 py-2 rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors">
+                    <i class="fa-solid fa-trash-can mr-2"></i>Kişiyi Sil
+                </button>
+                <div class="flex w-full sm:w-auto gap-3">
+                    <button onclick="closeEditModal()" class="w-full sm:w-auto px-6 py-2 rounded-lg font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition-colors">İptal</button>
+                    <button onclick="saveEditData()" class="w-full sm:w-auto px-6 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md">
+                        <i class="fa-solid fa-save mr-2"></i>Değişiklikleri Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. KONFİGÜRASYON ---
+        const criteriaConfig = [
+            {
+                sectionId: 1, sectionName: "1. Kurumsal Değerler & Uyum", sectionWeight: 10,
+                params: [
+                    { id: "1_1", name: "ISS Temel Değerler", weight: 3.33, olcut: ["1: Değerleri bilmiyor.", "2: İsimleri biliyor, davranışa yansıtmıyor.", "3: Genel bilgi var, kısmen uygular.", "4: Değerleri özümsemiş, ekibe aktarıyor.", "5: Rol model, değerler tüm kararlarında görülür."] },
+                    { id: "1_2", name: "Etik & Davranış Standardı", weight: 3.33, olcut: ["1: Sık ihlal (kıyafet, mesai, iletişim).", "2: Zaman zaman hatırlatma gerekiyor.", "3: Genel uyumlu, nadir aksaklık.", "4: Tam uyumlu, ekibi de uyarıyor.", "5: İhlal sıfır, standartları belirliyor."] },
+                    { id: "1_3", name: "ISG Kültürü & Güvenli Davranış", weight: 3.34, olcut: ["1: Kurallara uymaz.", "2: Uyarılara rağmen ihlal yapar.", "3: Temel İSG kurallarına uyar.", "4: Ekibini denetler ve uyarır.", "5: Proaktif İSG kültürü oluşturur."] }
+                ]
+            },
+            {
+                sectionId: 2, sectionName: "2. Teknoloji & Dijital Araçlar", sectionWeight: 10,
+                params: [
+                    { id: "2_1", name: "ISS Uygulamaları (Mobil, vb.)", weight: 5, olcut: ["1: Uygulamaları kullanmıyor.", "2: Zorunlu hallerde eksik kullanıyor.", "3: Standart kullanımı biliyor ve uyguluyor.", "4: Etkin kullanıyor, verimlilik sağlıyor.", "5: Sistemde uzman, yeni yöntem geliştiriyor."] },
+                    { id: "2_2", name: "Dijital Raporlama & Veri Analizi", weight: 5, olcut: ["1: Veri okuyamıyor, raporlama yok.", "2: Raporları düzenli hazırlamıyor.", "3: Beklenen raporları sunuyor.", "4: Veriyi anlayıp aksiyona dönüştürüyor.", "5: İleri düzey analizle öngörüsel aksiyon alıyor."] }
+                ]
+            },
+            {
+                sectionId: 3, sectionName: "3. Personel Yönetimi", sectionWeight: 10,
+                params: [
+                    { id: "3_1", name: "Personel Süreçleri (Brifing, vb.)", weight: 2.5, olcut: ["1: Süreçler hep hatalı ve eksik.", "2: Gecikmeli takip ediyor.", "3: Süreçleri prosedüre uygun yönetiyor.", "4: Süreçler eksiksiz ve zamanında yapılıyor.", "5: Sıfır hata ile örnek süreç yönetimi."] },
+                    { id: "3_2", name: "Ekip Motivasyonu & Liderlik", weight: 2.5, olcut: ["1: Ekip içi çatışma yüksek.", "2: Motivasyon düşük, müdahale yetersiz.", "3: Ekip uyumlu çalışıyor.", "4: Takım ruhu yaratıyor.", "5: Yüksek bağlılık ve performanslı ekip yaratmış."] },
+                    { id: "3_3", name: "Eğitim & Gelişim Takibi", weight: 2.5, olcut: ["1: Eğitimler verilmiyor.", "2: Sadece zorunlu eğitimler eksik veriliyor.", "3: Planlanan eğitimler tamamlanıyor.", "4: Ekibin gelişimine özel ek eğitimler planlıyor.", "5: Yetiştirici rolünde, personeli terfiye hazırlıyor."] },
+                    { id: "3_4", name: "Personel Süreçleri (Norm Kadro/İzin)", weight: 2.5, olcut: ["1: Kadro planlaması yok.", "2: Devamsızlık yönetimi zayıf.", "3: Kadroyu standart seviyede tutuyor.", "4: İzin ve vardiya planlamasında optimum denge.", "5: Maksimum verimlilikle kadro esnekliği sağlıyor."] }
+                ]
+            },
+            {
+                sectionId: 4, sectionName: "4. Müşteri & Sözleşme Yönetimi", sectionWeight: 10,
+                params: [
+                    { id: "4_1", name: "Müşteri Süreçleri & İlişki Yönetimi", weight: 3.33, olcut: ["1: Müşteri şikayeti yoğun.", "2: Reaktif iletişim, sadece sorunda ulaşıyor.", "3: Düzenli iletişim ve memnuniyet var.", "4: Müşteri güveni kazanmış, proaktif çözüm üretiyor.", "5: Müşteri ile stratejik partnerlik kurmuş."] },
+                    { id: "4_2", name: "Sözleşme & SLA Bilgisi", weight: 3.33, olcut: ["1: Sözleşme maddelerini bilmiyor.", "2: SLA hedeflerinin gerisinde.", "3: Sözleşme şartlarını tam karşılıyor.", "4: SLA üstü performans sergiliyor.", "5: Sözleşme dışı fırsatları/tasarrufları müşteriye sunuyor."] },
+                    { id: "4_3", name: "Proje KPI Hakimiyeti", weight: 3.34, olcut: ["1: Hedeflerden habersiz.", "2: KPI'ları takip ediyor ancak aksiyon almıyor.", "3: Hedefleri tutturuyor.", "4: KPI sonuçlarını analiz edip iyileştiriyor.", "5: KPI standartlarını yukarı taşıyan projeler yapıyor."] }
+                ]
+            },
+            {
+                sectionId: 5, sectionName: "5. Saha & Operasyon", sectionWeight: 40,
+                params: [
+                    { id: "5_1", name: "Saha Proses Uygulama", weight: 8, olcut: ["1: Prosedürlere uyulmuyor.", "2: Eksik ve yanlış uygulamalar var.", "3: Standartlara uygun proses yönetimi.", "4: Kalite standardı yüksek, sahada tam hakimiyet.", "5: Mükemmel saha düzeni, rol model alan."] },
+                    { id: "5_2", name: "Makine & Ekipman Yönetimi", weight: 8, olcut: ["1: Talimatlara uyulmuyor.", "2: Ekipmanlar bakımsız, israf var.", "3: Doğru ve standart makine kullanımı.", "4: Düzenli bakım, envanter takibi kusursuz.", "5: Maliyet düşürücü optimizasyonlar yapıyor."] },
+                    { id: "5_3", name: "Vardiya & İş Planı", weight: 8, olcut: ["1: Planlama yok, işler aksıyor.", "2: İş yükü dağılımı adaletsiz.", "3: Vardiyalar ve iş planı düzenli işliyor.", "4: Esnek durumlara hızlı müdahale planı var.", "5: Sıfır aksaklık ile dinamik planlama yapıyor."] },
+                    { id: "5_4", name: "Denetim Sonuçları", weight: 8, olcut: ["1: Denetimlerde sürekli majör hata.", "2: Majör hatalar tekrarlanıyor.", "3: Standart puanlar alınıyor, minör hatalar.", "4: Denetim puanları sürekli yüksek (90+).", "5: Hatasız, tebrik alan denetim performansı."] },
+                    { id: "5_5", name: "Sınav Puanı", weight: 8, olcut: ["1: Başarısız (0-40).", "2: Zayıf bilgi (41-59).", "3: Yeterli düzeyde bilgi (60-79).", "4: Yüksek bilgi seviyesi (80-94).", "5: Tam puan veya mükemmele yakın (95-100)."] }
+                ]
+            },
+            {
+                sectionId: 6, sectionName: "6. Liderlik & Kişisel Gelişim", sectionWeight: 10,
+                params: [
+                    { id: "6_1", name: "İletişim & Sunum Becerileri", weight: 3.33, olcut: ["1: İletişim zayıf.", "2: Çatışmacı dil kullanıyor.", "3: Net iletişim kuruyor.", "4: Toplantıları iyi yönetiyor.", "5: İkna edici, raporları model alınıyor."] },
+                    { id: "6_2", name: "Koçluk & Mentörlük", weight: 3.33, olcut: ["1: Geri bildirim vermiyor.", "2: Genel yorum yapıyor, eylem planı yok.", "3: Güçlü/zayıf yönleri tespit ediyor.", "4: Bireysel gelişim planı hazır, 1:1 görüşme yapıyor.", "5: Ekip üyelerini terfi ettiriyor."] },
+                    { id: "6_3", name: "Değişim Yönetimi & Süreç İyileştirme", weight: 3.34, olcut: ["1: Değişime direnç gösteriyor.", "2: Adaptasyon yavaş.", "3: Yeni süreçlere uyum sağlıyor.", "4: Değişimi ekibine benimsetiyor.", "5: Son 6 ayda ≥1 somut iyileştirme hayata geçirdi."] }
+                ]
+            },
+            {
+                sectionId: 7, sectionName: "7. DÖF & Operasyon Performans", sectionWeight: 10,
+                params: [
+                    { id: "7_1", name: "DÖF Süreçleri", weight: 10, olcut: ["1: Uygunsuzluklara belirlenen termin sürelerinde DÖF almamaktadır.", "2: DÖF termin sürelerine uymaktadır. Kaliteci Red mevcuttur.", "3: DÖF termin sürelerine uymaktadır. Kaliteci RED mevcut değildir.", "4: Sürdürülebilir döf almaktadır.", "5: Sürdürülebilir döf ile kalıcı çözüm sağlar."] }
+                ]
+            }
+        ];
+
+        let totalParamCount = 0;
+        criteriaConfig.forEach(s => totalParamCount += s.params.length);
+        let employeesData = JSON.parse(localStorage.getItem('beyazYakaDataList')) || [];
+        let currentEditId = null;
+
+        // --- ORTAK FİLTRE DOLDURUCU YARDIMCI FONKSİYON ---
+        function populateFilter(elementId, dataKey) {
+            const filter = document.getElementById(elementId);
+            if(!filter) return;
+            const values = [...new Set(employeesData.map(e => e[dataKey] || 'Belirtilmedi'))].filter(v=>v).sort();
+            const currentVal = filter.value;
+            filter.innerHTML = '<option value="all">Tümü</option>';
+            values.forEach(v => {
+                filter.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+            if(values.includes(currentVal)) filter.value = currentVal;
+        }
+
+        // --- SEKME YÖNETİMİ ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+
+            if(tabId === 'ozet') {
+                populateFilter('project-filter', 'projectName');
+                populateFilter('service-filter', 'service');
+                renderSummaryTable();
+            }
+            if(tabId === 'skor-karti') {
+                populateFilter('scorecard-project-filter', 'projectName');
+                updateScorecardEmployeeDropdown();
+            }
+            if(tabId === 'tum-veriler') {
+                populateFilter('all-data-project-filter', 'projectName');
+                populateFilter('all-data-service-filter', 'service');
+                renderAllDataTable();
+            }
+        }
+
+        // --- FORM OLUŞTURUCU ---
+        function generateFormHTML(inputPrefix, onchangeFunction) {
+            let html = '';
+            criteriaConfig.forEach(section => {
+                html += `
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                        <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">${section.sectionName}</h3>
+                            <span class="text-xs text-gray-500">Ağırlık: %${section.sectionWeight}</span>
+                        </div>
+                        <div class="p-3 space-y-3">
+                `;
+                section.params.forEach(param => {
+                    html += `
+                        <div class="flex flex-col bg-gray-50 p-3 rounded border border-gray-100 hover:border-blue-200 transition-colors">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between mb-2">
+                                <div class="md:w-2/3 mb-2 md:mb-0">
+                                    <h4 class="font-bold text-sm text-gray-800">${param.name} <span class="text-xs text-blue-600 ml-1">(%${param.weight})</span></h4>
+                                </div>
+                                <div class="md:w-1/3 flex justify-end">
+                                    <div class="flex gap-1.5">
+                                        ${[1, 2, 3, 4, 5].map(v => `
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="${inputPrefix}_p_${param.id}" value="${v}" onchange="${onchangeFunction}()" class="peer sr-only">
+                                                <div class="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-sm font-bold text-gray-500 bg-white
+                                                    peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-gray-200 transition-colors shadow-sm">
+                                                    ${v}
+                                                </div>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50/50 p-2 rounded border border-blue-100 text-[10px] text-gray-600 grid grid-cols-1 md:grid-cols-5 gap-1">
+                                ${param.olcut.map(o => `
+                                    <div class="p-1 border-l border-blue-200 pl-1.5">
+                                        <span class="font-black text-blue-800">${o.substring(0,2)}</span>${o.substring(2)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            return html;
+        }
+
+        document.getElementById('evaluation-form').innerHTML = generateFormHTML('new', 'checkFormValidity');
+        document.getElementById('edit-evaluation-form').innerHTML = generateFormHTML('edit', 'validateEditForm');
+
+        // --- YENİ KAYIT İŞLEMLERİ ---
+        function checkFormValidity() {
+            const name = document.getElementById('emp-name').value.trim();
+            const project = document.getElementById('emp-project').value.trim();
+            const service = document.getElementById('emp-service').value.trim();
+            const position = document.getElementById('emp-position').value.trim();
+            const checkedCount = document.querySelectorAll('#evaluation-form input[type="radio"]:checked').length;
+            const btn = document.getElementById('btn-add-employee');
+            const warning = document.getElementById('form-warning');
+
+            if(name !== "" && project !== "" && service !== "" && position !== "" && checkedCount === totalParamCount) {
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                warning.style.display = 'none';
+            } else {
+                btn.disabled = true;
+                btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                warning.style.display = 'block';
+            }
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('emp-name').value.trim();
+            const project = document.getElementById('emp-project').value.trim();
+            const service = document.getElementById('emp-service').value.trim();
+            const position = document.getElementById('emp-position').value.trim();
+            const comment = document.getElementById('emp-comment').value.trim();
+
+            let scores = {};
+            criteriaConfig.forEach(s => {
+                s.params.forEach(p => {
+                    const sel = document.querySelector(`input[name="new_p_${p.id}"]:checked`);
+                    if(sel) scores[p.id] = parseInt(sel.value);
+                });
+            });
+
+            employeesData.push({ id: Date.now(), name, projectName: project, service, position, comment, scores });
+            localStorage.setItem('beyazYakaDataList', JSON.stringify(employeesData));
+
+            document.getElementById('emp-name').value = '';
+            document.getElementById('emp-project').value = '';
+            document.getElementById('emp-service').value = '';
+            document.getElementById('emp-position').value = '';
+            document.getElementById('emp-comment').value = '';
+            document.querySelectorAll('#evaluation-form input[type="radio"]').forEach(r => r.checked = false);
+            
+            checkFormValidity();
+            alert(`${name} başarıyla sisteme eklendi.`);
+        }
+
+        // --- DÜZENLEME (MODAL) İŞLEMLERİ ---
+        function openEditModal(id) {
+            currentEditId = id;
+            const emp = employeesData.find(e => e.id === id);
+            if(!emp) return;
+            
+            document.getElementById('edit-emp-name').value = emp.name;
+            document.getElementById('edit-emp-project').value = emp.projectName;
+            document.getElementById('edit-emp-service').value = emp.service || "";
+            document.getElementById('edit-emp-position').value = emp.position;
+            document.getElementById('edit-emp-comment').value = emp.comment;
+            
+            document.querySelectorAll('#edit-evaluation-form input[type="radio"]').forEach(r => r.checked = false);
+            for (let paramId in emp.scores) {
+                const val = emp.scores[paramId];
+                const radio = document.querySelector(`input[name="edit_p_${paramId}"][value="${val}"]`);
+                if(radio) radio.checked = true;
+            }
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            currentEditId = null;
+        }
+
+        function validateEditForm() {}
+
+        function saveEditData() {
+            const emp = employeesData.find(e => e.id === currentEditId);
+            if(!emp) return;
+            
+            const name = document.getElementById('edit-emp-name').value.trim();
+            const project = document.getElementById('edit-emp-project').value.trim();
+            const service = document.getElementById('edit-emp-service').value.trim();
+            const position = document.getElementById('edit-emp-position').value.trim();
+            
+            if(!name || !project || !service || !position) {
+                alert("Ad, Proje, Hizmet ve Pozisyon alanları boş bırakılamaz.");
+                return;
+            }
+
+            const checkedCount = document.querySelectorAll('#edit-evaluation-form input[type="radio"]:checked').length;
+            if(checkedCount < totalParamCount) {
+                alert("Lütfen tüm parametrelere puan verdiğinizden emin olun.");
+                return;
+            }
+            
+            emp.name = name;
+            emp.projectName = project;
+            emp.service = service;
+            emp.position = position;
+            emp.comment = document.getElementById('edit-emp-comment').value.trim();
+            
+            criteriaConfig.forEach(s => {
+                s.params.forEach(p => {
+                    const sel = document.querySelector(`input[name="edit_p_${p.id}"]:checked`);
+                    if(sel) emp.scores[p.id] = parseInt(sel.value);
+                });
+            });
+            
+            localStorage.setItem('beyazYakaDataList', JSON.stringify(employeesData));
+            closeEditModal();
+            
+            // Tüm sekmelerdeki tabloları/filtreleri yenile
+            if(document.getElementById('ozet').classList.contains('active')) switchTab('ozet');
+            if(document.getElementById('skor-karti').classList.contains('active')) switchTab('skor-karti');
+            if(document.getElementById('tum-veriler').classList.contains('active')) switchTab('tum-veriler');
+        }
+
+        function deleteEmployee() {
+            const emp = employeesData.find(e => e.id === currentEditId);
+            if(confirm(`"${emp.name}" isimli kaydı kalıcı olarak silmek istediğinize emin misiniz?`)) {
+                employeesData = employeesData.filter(e => e.id !== currentEditId);
+                localStorage.setItem('beyazYakaDataList', JSON.stringify(employeesData));
+                closeEditModal();
+                if(document.getElementById('ozet').classList.contains('active')) switchTab('ozet');
+                if(document.getElementById('skor-karti').classList.contains('active')) switchTab('skor-karti');
+                if(document.getElementById('tum-veriler').classList.contains('active')) switchTab('tum-veriler');
+            }
+        }
+
+        // --- BÖLÜM BAZLI PERFORMANS (ÖZET TABLO) ---
+        function calculateScore(emp, sId) {
+            const section = criteriaConfig.find(s => s.sectionId === sId);
+            let total = 0;
+            section.params.forEach(p => {
+                const val = emp.scores[p.id] || 0;
+                total += (val * p.weight) / 5;
+            });
+            return total;
+        }
+
+        function renderSummaryTable() {
+            const pFilter = document.getElementById('project-filter').value;
+            const sFilter = document.getElementById('service-filter').value;
+            
+            let filteredData = employeesData;
+            if(pFilter !== 'all') filteredData = filteredData.filter(e => e.projectName === pFilter);
+            if(sFilter !== 'all') filteredData = filteredData.filter(e => e.service === sFilter);
+
+            const header = document.getElementById('summary-header');
+            const tbody = document.getElementById('summary-tbody');
+            const tfoot = document.getElementById('summary-tfoot');
+
+            if (filteredData.length === 0) {
+                header.innerHTML = '<th class="px-4 py-4 font-bold text-gray-500">DEĞERLENDİRME BÖLÜMLERİ</th>';
+                tbody.innerHTML = '<tr><td class="p-4 text-center text-gray-500 italic">Kayıt bulunmamaktadır.</td></tr>';
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            header.innerHTML = '<th class="px-4 py-4 font-bold text-blue-900 border-r w-1/4">DEĞERLENDİRME BÖLÜMLERİ</th>';
+            filteredData.forEach(emp => {
+                header.innerHTML += `
+                    <th class="px-4 py-3 text-center border-l bg-gray-50 min-w-[130px] transition-colors hover:bg-blue-100 cursor-pointer" onclick="openEditModal(${emp.id})" title="Düzenlemek İçin Tıklayın">
+                        <div class="text-blue-700 font-bold hover:text-blue-900 flex items-center justify-center gap-1">
+                            ${emp.name} <i class="fa-solid fa-pen text-[10px] opacity-70"></i>
+                        </div>
+                        <div class="text-[11px] text-gray-500 font-normal mt-1">${emp.projectName} | ${emp.service || ''}</div>
+                    </th>`;
+            });
+            header.innerHTML += '<th class="px-4 py-4 text-center bg-gray-200 w-24">AĞIRLIK</th>';
+
+            tbody.innerHTML = '';
+            let empTotals = Array(filteredData.length).fill(0);
+
+            criteriaConfig.forEach(section => {
+                let row = `<tr class="hover:bg-gray-50"><td class="px-4 py-3 font-medium text-gray-800 border-r">${section.sectionName}</td>`;
+                filteredData.forEach((emp, i) => {
+                    const s = calculateScore(emp, section.sectionId);
+                    empTotals[i] += s;
+                    row += `<td class="px-4 py-3 text-center border-l text-gray-600 font-semibold">${s.toFixed(2)}</td>`;
+                });
+                row += `<td class="px-4 py-3 text-center font-bold bg-gray-50 text-gray-500">%${section.sectionWeight}</td></tr>`;
+                tbody.innerHTML += row;
+            });
+
+            let footerRow = `<tr><td class="px-4 py-4 border-r text-blue-900 font-black">GENEL PERFORMANS SKORU</td>`;
+            empTotals.forEach(t => {
+                let color = t >= 85 ? 'text-green-600' : (t >= 70 ? 'text-yellow-600' : 'text-red-600');
+                footerRow += `<td class="px-4 py-4 text-center border-l text-xl font-black ${color}">${t.toFixed(2)}</td>`;
+            });
+            footerRow += `<td class="px-4 py-4 text-center text-blue-900 font-black">%100</td></tr>`;
+            tfoot.innerHTML = footerRow;
+        }
+
+        // --- BİREYSEL SKOR KARTI & PDF ---
+        function updateScorecardEmployeeDropdown() {
+            const projectFilter = document.getElementById('scorecard-project-filter').value;
+            const scSelect = document.getElementById('scorecard-select');
+            scSelect.innerHTML = '';
+            
+            let fd = projectFilter !== 'all' ? employeesData.filter(e => e.projectName === projectFilter) : employeesData;
+            if(fd.length === 0) {
+                scSelect.innerHTML = '<option value="">Kayıt Bulunmuyor</option>';
+            } else {
+                [...fd].sort((a,b) => a.name.localeCompare(b.name)).forEach(emp => {
+                    scSelect.innerHTML += `<option value="${emp.id}">${emp.name} (${emp.projectName})</option>`;
+                });
+            }
+            renderScorecard();
+        }
+
+        function renderScorecard() {
+            const scSelect = document.getElementById('scorecard-select');
+            const tbody = document.getElementById('scorecard-tbody');
+
+            if(!scSelect.value || employeesData.length === 0) {
+                document.getElementById('sc-name').textContent = "-";
+                document.getElementById('sc-project').textContent = "-";
+                document.getElementById('sc-service').textContent = "-";
+                document.getElementById('sc-position').textContent = "-";
+                document.getElementById('sc-total').textContent = "0.00";
+                document.getElementById('sc-comment').textContent = "Yorum yok.";
+                tbody.innerHTML = '';
+                return;
+            }
+
+            const empId = parseInt(scSelect.value);
+            const emp = employeesData.find(e => e.id === empId);
+            if(!emp) return;
+
+            document.getElementById('sc-name').textContent = emp.name;
+            document.getElementById('sc-project').textContent = emp.projectName;
+            document.getElementById('sc-service').textContent = emp.service || "-";
+            document.getElementById('sc-position').textContent = emp.position;
+            document.getElementById('sc-comment').textContent = emp.comment || "Yorum girilmedi.";
+
+            tbody.innerHTML = '';
+            let totalOverallScore = 0;
+
+            criteriaConfig.forEach(section => {
+                tbody.innerHTML += `<tr class="bg-blue-50/50"><td colspan="4" class="px-4 py-2 font-bold text-blue-900 text-xs tracking-wider border-y border-blue-100">${section.sectionName.toUpperCase()}</td></tr>`;
+                section.params.forEach(param => {
+                    const puan = emp.scores[param.id] || 0;
+                    const skor = puan > 0 ? ((puan * param.weight) / 5) : 0;
+                    totalOverallScore += skor;
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100">
+                            <td class="px-4 py-2 text-gray-800 pl-8 font-medium">${param.name}</td>
+                            <td class="px-4 py-2 text-center font-bold ${puan < 3 && puan > 0 ? 'text-red-500' : 'text-gray-700'}">${puan || '-'}</td>
+                            <td class="px-4 py-2 text-center text-gray-500 text-xs">%${param.weight}</td>
+                            <td class="px-4 py-2 text-center font-bold text-blue-700">${skor.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            const scTotalEl = document.getElementById('sc-total');
+            scTotalEl.textContent = totalOverallScore.toFixed(2);
+            scTotalEl.className = `text-4xl font-black ${totalOverallScore >= 85 ? 'text-green-600' : (totalOverallScore >= 70 ? 'text-yellow-600' : 'text-red-600')}`;
+        }
+
+        function exportToPDF() {
+            const empName = document.getElementById('sc-name').textContent.trim();
+            if (empName === '-' || empName === '') {
+                alert("Lütfen PDF indirmeden önce listeden bir çalışan seçin.");
+                return;
+            }
+            const element = document.getElementById('printable-scorecard');
+            const opt = {
+                margin:       0.4,
+                filename:     `Skor_Karti_${empName.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // --- TÜM VERİLER (ALL DATA TAB) VE EXCEL EXPORT ---
+        function renderAllDataTable() {
+            const headerEl = document.getElementById('all-data-header');
+            const tbodyEl = document.getElementById('all-data-tbody');
+            
+            const pFilter = document.getElementById('all-data-project-filter').value;
+            const sFilter = document.getElementById('all-data-service-filter').value;
+            
+            let filteredList = employeesData;
+            if(pFilter !== 'all') filteredList = filteredList.filter(e => e.projectName === pFilter);
+            if(sFilter !== 'all') filteredList = filteredList.filter(e => e.service === sFilter);
+
+            // Başlıkları Oluştur
+            let headerHTML = `<tr>
+                <th class="px-4 py-3 font-bold text-gray-700 border-r bg-gray-200 sticky left-0 z-10">Çalışan Adı</th>
+                <th class="px-4 py-3 font-bold text-gray-700 border-r bg-gray-100">Proje Adı</th>
+                <th class="px-4 py-3 font-bold text-gray-700 border-r bg-gray-100">Hizmet</th>
+                <th class="px-4 py-3 font-bold text-gray-700 border-r bg-gray-100">Pozisyon</th>
+            `;
+            criteriaConfig.forEach(s => {
+                s.params.forEach(p => {
+                    let shortName = p.name.split(' ').slice(0,3).join(' ') + (p.name.split(' ').length > 3 ? '...' : '');
+                    headerHTML += `<th class="px-4 py-3 font-semibold text-gray-600 border-r" title="${p.name}">${shortName}</th>`;
+                });
+            });
+            headerHTML += `
+                <th class="px-4 py-3 font-black text-blue-900 border-r bg-blue-100">Genel Skor</th>
+                <th class="px-4 py-3 font-bold text-gray-700 border-r">Operasyon Performans Yorumu</th>
+            </tr>`;
+            headerEl.innerHTML = headerHTML;
+
+            // Verileri Oluştur
+            if(filteredList.length === 0) {
+                tbodyEl.innerHTML = `<tr><td colspan="${4 + totalParamCount + 2}" class="px-4 py-4 text-center text-gray-500 italic">Bu filtrelere uygun kayıt bulunamadı.</td></tr>`;
+                return;
+            }
+
+            let tbodyHTML = '';
+            filteredList.forEach(emp => {
+                let rowHTML = `<tr class="hover:bg-blue-50 transition-colors">
+                    <td class="px-4 py-3 font-bold text-gray-800 border-r bg-white sticky left-0 z-10">${emp.name}</td>
+                    <td class="px-4 py-3 text-gray-700 border-r">${emp.projectName}</td>
+                    <td class="px-4 py-3 text-gray-700 border-r">${emp.service || '-'}</td>
+                    <td class="px-4 py-3 text-gray-700 border-r">${emp.position}</td>
+                `;
+                
+                let totalScore = 0;
+                criteriaConfig.forEach(s => {
+                    s.params.forEach(p => {
+                        const val = emp.scores[p.id] || 0;
+                        const pScore = val > 0 ? (val * p.weight / 5) : 0;
+                        totalScore += pScore;
+                        
+                        let colorClass = val === 5 ? 'text-green-600 font-bold' : (val < 3 && val > 0 ? 'text-red-500 font-bold' : 'text-gray-700');
+                        rowHTML += `<td class="px-4 py-3 text-center border-r ${colorClass}">${val || '-'}</td>`;
+                    });
+                });
+
+                let scoreColor = totalScore >= 85 ? 'text-green-600' : (totalScore >= 70 ? 'text-yellow-600' : 'text-red-600');
+                rowHTML += `
+                    <td class="px-4 py-3 text-center border-r font-black text-sm bg-blue-50 ${scoreColor}">${totalScore.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-gray-600 border-r min-w-[300px] truncate" title="${emp.comment}">${emp.comment || '-'}</td>
+                </tr>`;
+                tbodyHTML += rowHTML;
+            });
+            tbodyEl.innerHTML = tbodyHTML;
+        }
+
+        function exportToExcel() {
+            const pFilter = document.getElementById('all-data-project-filter').value;
+            const sFilter = document.getElementById('all-data-service-filter').value;
+            
+            let exportList = employeesData;
+            if(pFilter !== 'all') exportList = exportList.filter(e => e.projectName === pFilter);
+            if(sFilter !== 'all') exportList = exportList.filter(e => e.service === sFilter);
+
+            if(exportList.length === 0) {
+                alert("Dışa aktarılacak veri bulunamadı.");
+                return;
+            }
+
+            let exportData = [];
+            
+            // 1. Excel Başlık Satırı Oluştur
+            let header = ["Çalışan Adı", "Proje Adı", "Hizmet", "Pozisyon"];
+            criteriaConfig.forEach(s => {
+                s.params.forEach(p => {
+                    header.push(`${s.sectionName} - ${p.name}`);
+                });
+            });
+            header.push("Genel Performans Skoru (100)", "Operasyon Performans Yorumu");
+            exportData.push(header);
+
+            // 2. Excel Veri Satırlarını Oluştur
+            exportList.forEach(emp => {
+                let row = [emp.name, emp.projectName, (emp.service || ""), emp.position];
+                let totalOverallScore = 0;
+                
+                criteriaConfig.forEach(s => {
+                    s.params.forEach(p => {
+                        const val = emp.scores[p.id] || 0;
+                        row.push(val);
+                        if (val > 0) {
+                            totalOverallScore += (val * p.weight) / 5;
+                        }
+                    });
+                });
+                
+                row.push(Number(totalOverallScore.toFixed(2))); 
+                row.push(emp.comment || "");
+                exportData.push(row);
+            });
+
+            // 3. Çalışma Kitabını Oluştur ve İndir
+            const ws = XLSX.utils.aoa_to_sheet(exportData);
+            
+            const wscols = [{wch: 25}, {wch: 20}, {wch: 15}, {wch: 25}]; 
+            for(let i=0; i<totalParamCount; i++) wscols.push({wch: 15}); 
+            wscols.push({wch: 30}, {wch: 60}); 
+            ws['!cols'] = wscols;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Performans_Verileri");
+            
+            const date = new Date();
+            const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
+            XLSX.writeFile(wb, `Beyaz_Yaka_Performans_Raporu_${dateString}.xlsx`);
+        }
+
+        // --- BAŞLANGIÇ YÜKLEMELERİ ---
+        checkFormValidity();
+    </script>
+</body>
+</html>
